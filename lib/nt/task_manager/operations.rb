@@ -43,6 +43,7 @@ module NT
         return false unless task
 
         task.instance_variable_set(:@completed, false)
+        persist_task(task) if respond_to?(:persist_task)
         true
       end
 
