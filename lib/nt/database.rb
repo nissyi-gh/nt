@@ -32,15 +32,16 @@ module NT
 
     def insert_task(task)
       sql = <<-SQL
-        INSERT INTO tasks (title, completed, parent_id, due_date)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO tasks (title, completed, parent_id, due_date, reference_url)
+        VALUES (?, ?, ?, ?, ?)
       SQL
 
       @db.execute(sql, [
         task.title,
         task.completed? ? 1 : 0,
         task.parent&.id,
-        task.due_date&.to_s
+        task.due_date&.to_s,
+        task.reference_url
       ])
 
       @db.last_insert_row_id
@@ -49,7 +50,7 @@ module NT
     def update_task(task)
       sql = <<-SQL
         UPDATE tasks
-        SET title = ?, completed = ?, parent_id = ?, due_date = ?, updated_at = CURRENT_TIMESTAMP
+        SET title = ?, completed = ?, parent_id = ?, due_date = ?, reference_url = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       SQL
 
@@ -58,6 +59,7 @@ module NT
         task.completed? ? 1 : 0,
         task.parent&.id,
         task.due_date&.to_s,
+        task.reference_url,
         task.id
       ])
     end
@@ -116,12 +118,14 @@ module NT
       title = row['title'] || row[:title]
       completed = row['completed'] || row[:completed]
       due_date_str = row['due_date'] || row[:due_date]
+      reference_url = row['reference_url'] || row[:reference_url]
 
       Task.new(
         id: id.to_i,
         title: title.to_s,
         parent: nil,
-        due_date: due_date_str ? Date.parse(due_date_str.to_s) : nil
+        due_date: due_date_str ? Date.parse(due_date_str.to_s) : nil,
+        reference_url: reference_url
       ).tap do |task|
         task.complete! if completed.to_i == 1
       end

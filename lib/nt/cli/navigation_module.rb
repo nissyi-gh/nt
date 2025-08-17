@@ -47,6 +47,9 @@ module NT
         when "m", "M"
           clear_id_buffer
           export_to_markdown
+        when "i", "I"
+          clear_id_buffer
+          show_task_details if @all_tasks.any?
         when "q", "Q"
           clear_id_buffer
           @running = false
@@ -94,10 +97,15 @@ module NT
 
         puts "\n" + "=" * 30
         puts "Task: #{task.title}"
+        if task.reference_url && !task.reference_url.empty?
+          puts "URL: #{task.reference_url}"
+        end
         puts "=" * 30
         puts "[C] Complete/Uncomplete"
         puts "[E] Edit title"
         puts "[D] Set due date"
+        puts "[U] Edit URL"
+        puts "[V] View/Open URL"
         puts "[A] Add child task"
         puts "[X] Delete task"
         puts "[ESC] Cancel"
@@ -128,6 +136,25 @@ module NT
               sleep(1)
             end
           end
+        when "u", "U"
+          puts "\nCurrent URL: #{task.reference_url || '(none)'}"
+          print "New URL (leave empty to clear): "
+          new_url = gets.chomp
+          @task_manager.edit_reference_url(task.id, new_url.empty? ? nil : new_url)
+        when "v", "V"
+          if task.reference_url && !task.reference_url.empty?
+            puts "\nURL: #{task.reference_url}"
+            print "Open in browser? (y/N): "
+            confirm = get_single_char
+            if confirm.downcase == 'y'
+              system("open '#{task.reference_url}'") if RUBY_PLATFORM =~ /darwin/
+              system("xdg-open '#{task.reference_url}'") if RUBY_PLATFORM =~ /linux/
+              system("start '#{task.reference_url}'") if RUBY_PLATFORM =~ /mswin|mingw|cygwin/
+            end
+          else
+            puts "\nNo URL set for this task"
+            sleep(1)
+          end
         when "4", "a", "A"
           print "\nChild task title: "
           child_title = gets.chomp
@@ -150,6 +177,54 @@ module NT
         @task_manager.add(title)
         puts "Task added successfully!"
         sleep(0.5)
+      end
+      
+      def show_task_details
+        return unless @all_tasks[@selected_index]
+        
+        task = @all_tasks[@selected_index][:task]
+        
+        puts "\n" + "=" * 50
+        puts " Task Details".center(50)
+        puts "=" * 50
+        puts
+        puts "ID:          #{task.id}"
+        puts "Title:       #{task.title}"
+        puts "Status:      #{task.completed? ? '✓ Completed' : '○ Incomplete'}"
+        
+        if task.due_date
+          status = if task.overdue?
+                    "⚠️ OVERDUE"
+                  elsif task.due_today?
+                    "📅 Due Today"
+                  elsif task.due_soon?
+                    "⏰ Due Soon"
+                  else
+                    "Scheduled"
+                  end
+          puts "Due Date:    #{task.due_date} (#{status})"
+        else
+          puts "Due Date:    (not set)"
+        end
+        
+        if task.reference_url && !task.reference_url.empty?
+          puts "URL:         #{task.reference_url}"
+        else
+          puts "URL:         (not set)"
+        end
+        
+        if task.parent
+          puts "Parent Task: #{task.parent.title}"
+        end
+        
+        if task.children.any?
+          puts "Child Tasks: #{task.children.map(&:title).join(', ')}"
+        end
+        
+        puts
+        puts "-" * 50
+        puts "Press any key to continue..."
+        get_single_char
       end
     end
   end

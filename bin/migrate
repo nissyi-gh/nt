@@ -2,6 +2,7 @@
 
 require_relative '../lib/nt'
 require 'fileutils'
+require 'sqlite3'
 
 puts "=" * 60
 puts " NT Task Manager - Database Migration"
@@ -12,26 +13,66 @@ db_dir = File.expand_path('~/.nt')
 db_path = File.join(db_dir, 'tasks.db')
 
 if File.exist?(db_path)
-  print "Database already exists at #{db_path}. Recreate? (y/N): "
-  response = gets.chomp.downcase
+  puts "Database found at #{db_path}"
+  print "Choose action: [1] Add reference_url column  [2] Recreate database  [3] Cancel: "
+  response = gets.chomp
 
-  unless response == 'y'
+  case response
+  when '1'
+    # Add reference_url column to existing database
+    backup_path = "#{db_path}.backup.#{Time.now.strftime('%Y%m%d%H%M%S')}"
+    FileUtils.cp(db_path, backup_path)
+    puts "Backup created: #{backup_path}"
+    
+    begin
+      db = SQLite3::Database.new(db_path)
+      
+      # Check if reference_url column already exists
+      columns = db.execute("PRAGMA table_info(tasks)")
+      has_reference_url = columns.any? { |col| col[1] == 'reference_url' }
+      
+      if has_reference_url
+        puts "reference_url column already exists. No migration needed."
+      else
+        db.execute("ALTER TABLE tasks ADD COLUMN reference_url TEXT")
+        puts "Successfully added reference_url column to tasks table."
+      end
+      
+      db.close
+      puts "Migration completed!"
+      exit 0
+    rescue => e
+      puts "Error during migration: #{e.message}"
+      puts "Restoring backup..."
+      FileUtils.cp(backup_path, db_path)
+      exit 1
+    end
+    
+  when '2'
+    # Recreate database
+    backup_path = "#{db_path}.backup.#{Time.now.strftime('%Y%m%d%H%M%S')}"
+    FileUtils.cp(db_path, backup_path)
+    puts "Backup created: #{backup_path}"
+
+    FileUtils.rm(db_path)
+    puts "Existing database removed."
+    
+    puts "Creating new database..."
+    NT::Database.new
+    puts "Database created successfully at: #{db_path}"
+    
+  when '3'
     puts "Migration cancelled."
     exit 0
+  else
+    puts "Invalid option. Migration cancelled."
+    exit 0
   end
-
-  backup_path = "#{db_path}.backup.#{Time.now.strftime('%Y%m%d%H%M%S')}"
-  FileUtils.cp(db_path, backup_path)
-  puts "Backup created: #{backup_path}"
-
-  FileUtils.rm(db_path)
-  puts "Existing database removed."
+else
+  puts "Creating new database..."
+  NT::Database.new
+  puts "Database created successfully at: #{db_path}"
 end
-
-puts "Creating new database..."
-NT::Database.new
-
-puts "Database created successfully at: #{db_path}"
 
 print "\nInsert sample data? (y/N): "
 response = gets.chomp.downcase
@@ -40,23 +81,27 @@ if response == 'y'
   manager = NT::TaskManager.new
 
   project = manager.add("プロジェクト管理", due_date: Date.today + 30)
-  puts "Added: #{project.title}"
+  manager.edit_reference_url(project.id, "https://github.com/your-project")
+  puts "Added: #{project.title} (with URL)"
 
   planning = manager.add("企画フェーズ", parent_id: project.id, due_date: Date.today + 7)
   puts "  Added: #{planning.title}"
 
-  manager.add("開発フェーズ", parent_id: project.id, due_date: Date.today + 21)
-  puts "  Added: 開発フェーズ"
+  dev = manager.add("開発フェーズ", parent_id: project.id, due_date: Date.today + 21)
+  manager.edit_reference_url(dev.id, "https://docs.example.com/development")
+  puts "  Added: 開発フェーズ (with URL)"
 
   personal = manager.add("個人タスク")
   puts "Added: #{personal.title}"
 
-  manager.add("買い物", parent_id: personal.id, due_date: Date.today)
-  puts "  Added: 買い物"
+  shopping = manager.add("買い物", parent_id: personal.id, due_date: Date.today)
+  manager.edit_reference_url(shopping.id, "https://www.amazon.co.jp")
+  puts "  Added: 買い物 (with URL)"
 
   manager.close
 
   puts "\nSample data inserted successfully!"
+  puts "Some tasks have reference URLs (shown with 🔗 icon)"
 end
 
 puts "\nMigration completed!"

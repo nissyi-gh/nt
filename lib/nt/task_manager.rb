@@ -42,6 +42,15 @@ module NT
       true
     end
 
+    def edit_reference_url(id, new_url)
+      task = find_task(id)
+      return false unless task
+
+      task.update_reference_url(new_url)
+      persist_task(task) if respond_to?(:persist_task)
+      true
+    end
+
     def close
       close_database if respond_to?(:close_database)
     end
