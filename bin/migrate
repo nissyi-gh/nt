@@ -1,0 +1,63 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/nt'
+require 'fileutils'
+
+puts "=" * 60
+puts " NT Task Manager - Database Migration"
+puts "=" * 60
+puts
+
+db_dir = File.expand_path('~/.nt')
+db_path = File.join(db_dir, 'tasks.db')
+
+if File.exist?(db_path)
+  print "Database already exists at #{db_path}. Recreate? (y/N): "
+  response = gets.chomp.downcase
+
+  unless response == 'y'
+    puts "Migration cancelled."
+    exit 0
+  end
+
+  backup_path = "#{db_path}.backup.#{Time.now.strftime('%Y%m%d%H%M%S')}"
+  FileUtils.cp(db_path, backup_path)
+  puts "Backup created: #{backup_path}"
+
+  FileUtils.rm(db_path)
+  puts "Existing database removed."
+end
+
+puts "Creating new database..."
+NT::Database.new
+
+puts "Database created successfully at: #{db_path}"
+
+print "\nInsert sample data? (y/N): "
+response = gets.chomp.downcase
+
+if response == 'y'
+  manager = NT::TaskManager.new
+
+  project = manager.add("プロジェクト管理", due_date: Date.today + 30)
+  puts "Added: #{project.title}"
+
+  planning = manager.add("企画フェーズ", parent_id: project.id, due_date: Date.today + 7)
+  puts "  Added: #{planning.title}"
+
+  manager.add("開発フェーズ", parent_id: project.id, due_date: Date.today + 21)
+  puts "  Added: 開発フェーズ"
+
+  personal = manager.add("個人タスク")
+  puts "Added: #{personal.title}"
+
+  manager.add("買い物", parent_id: personal.id, due_date: Date.today)
+  puts "  Added: 買い物"
+
+  manager.close
+
+  puts "\nSample data inserted successfully!"
+end
+
+puts "\nMigration completed!"
+puts "You can now use 'nt' command to manage your tasks."

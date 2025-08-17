@@ -1,5 +1,15 @@
+require 'tempfile'
+
 RSpec.describe NT::CLI do
-  let(:cli) { described_class.new }
+  let(:temp_db) { Tempfile.new(['test_cli', '.db']) }
+  let(:task_manager) { NT::TaskManager.new(db_path: temp_db.path) }
+  let(:cli) { described_class.new(task_manager: task_manager) }
+  
+  after do
+    task_manager.close
+    temp_db.close
+    temp_db.unlink
+  end
 
   describe '#initialize' do
     it 'sets @running to true' do
@@ -101,7 +111,8 @@ RSpec.describe NT::CLI do
   describe '#show_prompt (private)' do
     it 'displays the command prompt' do
       expect(cli).to receive(:puts).with("-" * 50)
-      expect(cli).to receive(:puts).with("Commands: add <title> | complete <id> | edit <id> <title> | delete <id> | exit")
+      expect(cli).to receive(:puts).with("Commands: add <title> | add-child <parent_id> <title> | complete <id>")
+      expect(cli).to receive(:puts).with("          edit <id> <title> | delete <id> | exit")
       expect(cli).to receive(:print).with("> ")
 
       cli.send(:show_prompt)

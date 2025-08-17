@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/nt'
+
+# デモ用のタスクマネージャーを作成
+manager = NT::TaskManager.new
+
+puts "=" * 60
+puts " NT Task Manager - Demo"
+puts "=" * 60
+puts
+
+# ルートタスクを追加
+puts "1. Adding root tasks:"
+project = manager.add("Webアプリケーション開発", due_date: Date.today + 30)
+puts "   Added: #{project.to_s}"
+
+personal = manager.add("個人タスク")
+puts "   Added: #{personal.to_s}"
+
+puts "\n2. Adding child tasks:"
+frontend = manager.add("フロントエンド開発", parent_id: project.id, due_date: Date.today + 14)
+puts "   Added to project: #{frontend.to_s}"
+
+backend = manager.add("バックエンド開発", parent_id: project.id, due_date: Date.today + 21)
+puts "   Added to project: #{backend.to_s}"
+
+shopping = manager.add("買い物", parent_id: personal.id, due_date: Date.today)
+puts "   Added to personal: #{shopping.to_s}"
+
+puts "\n3. Adding grandchild tasks:"
+ui = manager.add("UI実装", parent_id: frontend.id, due_date: Date.today + 7)
+puts "   Added to frontend: #{ui.to_s}"
+
+api = manager.add("API実装", parent_id: backend.id, due_date: Date.today + 14)
+puts "   Added to backend: #{api.to_s}"
+
+puts "\n4. Completing some tasks:"
+manager.complete(ui.id)
+puts "   Completed: UI実装"
+
+puts "\n" + "=" * 60
+puts " Hierarchical Task View"
+puts "=" * 60
+puts
+
+manager.root_tasks.each do |task|
+  puts task.to_s
+  puts
+end
+
+puts "-" * 60
+stats = manager.statistics
+puts "Statistics:"
+puts "  Total: #{stats[:total]}"
+puts "  Completed: #{stats[:completed]}"
+puts "  Incomplete: #{stats[:incomplete]}"
+puts "  Due Today: #{stats[:due_today]}"
+puts "  Due Soon (3 days): #{stats[:due_soon]}"
+puts "-" * 60
+
+puts "\nCLI Commands Available:"
+puts "  add <title>              - Add a root task"
+puts "  add-child <id> <title>   - Add a child task (alias: ac)"
+puts "  complete <id>            - Complete a task (alias: c)"
+puts "  edit <id> <title>        - Edit task title (alias: e)"
+puts "  delete <id>              - Delete task and children (alias: d)"
+puts "  exit                     - Exit (alias: q)"
