@@ -29,6 +29,15 @@ module NT
           rescue IO::WaitReadable
             # No more input available
           end
+        when "k", "K"  # Vim-style up
+          clear_id_buffer
+          @selected_index -= 1 if @selected_index > 0 && @all_tasks.any?
+        when "j", "J"  # Vim-style down
+          clear_id_buffer
+          if @all_tasks.any?
+            max_index = @all_tasks.length - 1
+            @selected_index += 1 if @selected_index < max_index
+          end
         when "\r", "\n"  # Enter
           if @id_buffer.length > 0
             # Process ID buffer if we have digits
