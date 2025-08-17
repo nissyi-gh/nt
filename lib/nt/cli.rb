@@ -1,3 +1,5 @@
+require 'date'
+
 module NT
   class CLI
     def initialize(task_manager: nil)
@@ -50,7 +52,8 @@ module NT
     def show_prompt
       puts "-" * 50
       puts "Commands: add <title> | add-child <parent_id> <title> | complete <id>"
-      puts "          edit <id> <title> | delete <id> | exit"
+      puts "          edit <id> <title> | due <id> <date> | delete <id> | exit"
+      puts "          (date: YYYY-MM-DD, YYYYMMDD, MMDD, 'today', 'tomorrow', 'none')"
       print "> "
     end
 
@@ -72,6 +75,8 @@ module NT
         complete_task(parts[1]&.to_i)
       when "edit", "e"
         edit_task(parts[1]&.to_i, parts[2..-1]&.join(" "))
+      when "due"
+        edit_due_date(parts[1]&.to_i, parts[2])
       when "delete", "d"
         delete_task(parts[1]&.to_i)
       when "exit", "q"
@@ -154,6 +159,87 @@ module NT
         puts "Task #{id} not found."
       end
       sleep(1)
+    end
+
+    def edit_due_date(id, date_str)
+      return unless id
+
+      if date_str.nil? || date_str.strip.empty?
+        puts "Error: Date is required. Use YYYY-MM-DD, YYYYMMDD, MMDD, 'today', 'tomorrow', or 'none'"
+        sleep(1)
+        return
+      end
+
+      begin
+        due_date = parse_date_string(date_str)
+        
+        if @task_manager.edit_due_date(id, due_date)
+          if due_date.nil?
+            puts "Due date cleared for task #{id}"
+          else
+            puts "Due date set to #{due_date} for task #{id}"
+          end
+        else
+          puts "Task #{id} not found."
+        end
+        sleep(1)
+      rescue ArgumentError => e
+        puts "Error: #{e.message}"
+        sleep(1)
+      end
+    end
+
+    def parse_date_string(date_str)
+      case date_str.downcase
+      when 'none', 'clear'
+        nil
+      when 'today'
+        Date.today
+      when 'tomorrow'
+        Date.today + 1
+      else
+        # Try different date formats
+        parsed_date = nil
+        
+        # YYYYMMDD format (e.g., 20251231)
+        if date_str.match?(/^\d{8}$/)
+          year = date_str[0..3].to_i
+          month = date_str[4..5].to_i
+          day = date_str[6..7].to_i
+          begin
+            parsed_date = Date.new(year, month, day)
+          rescue Date::Error
+            # Invalid date
+          end
+        # MMDD format (e.g., 1231 for December 31st of current year)
+        elsif date_str.match?(/^\d{4}$/)
+          month = date_str[0..1].to_i
+          day = date_str[2..3].to_i
+          year = Date.today.year
+          begin
+            parsed_date = Date.new(year, month, day)
+            # If the date has already passed this year, assume next year
+            if parsed_date < Date.today
+              parsed_date = Date.new(year + 1, month, day)
+            end
+          rescue Date::Error
+            # Invalid date
+          end
+        else
+          # Try standard parse for YYYY-MM-DD and other formats
+          begin
+            parsed_date = Date.parse(date_str)
+          rescue Date::Error
+            # Invalid date
+          end
+        end
+        
+        if parsed_date.nil?
+          raise ArgumentError, "Invalid date format. Use YYYY-MM-DD, YYYYMMDD, MMDD, 'today', 'tomorrow', or 'none'"
+        end
+        
+        parsed_date
+      end
     end
   end
 end
