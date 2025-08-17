@@ -95,28 +95,28 @@ module NT
         puts "\n" + "=" * 30
         puts "Task: #{task.title}"
         puts "=" * 30
-        puts "1. Complete/Uncomplete"
-        puts "2. Edit title"
-        puts "3. Set due date"
-        puts "4. Add child task"
-        puts "5. Delete task"
-        puts "0. Cancel"
+        puts "[C] Complete/Uncomplete"
+        puts "[E] Edit title"
+        puts "[D] Set due date"
+        puts "[A] Add child task"
+        puts "[X] Delete task"
+        puts "[ESC] Cancel"
         print "Choose action: "
 
         action = get_single_char
 
         case action
-        when "1"
+        when "1", "c", "C"
           if task.completed?
             @task_manager.uncomplete(task.id)
           else
             @task_manager.complete(task.id)
           end
-        when "2"
+        when "2", "e", "E"
           print "\nNew title: "
           new_title = gets.chomp
           @task_manager.edit_title(task.id, new_title) unless new_title.empty?
-        when "3"
+        when "3", "d", "D"
           print "\nDue date (YYYY-MM-DD, YYYYMMDD, MMDD, today, tomorrow, none): "
           date_str = gets.chomp
           unless date_str.empty?
@@ -128,15 +128,17 @@ module NT
               sleep(1)
             end
           end
-        when "4"
+        when "4", "a", "A"
           print "\nChild task title: "
           child_title = gets.chomp
           @task_manager.add(child_title, parent_id: task.id) unless child_title.empty?
-        when "5"
+        when "5", "x", "X"
           print "\nDelete task '#{task.title}'? (y/N): "
           confirm = get_single_char
           @task_manager.delete(task.id) if confirm.downcase == 'y'
           @selected_index = [@selected_index - 1, 0].max if @selected_index >= @all_tasks.length - 1
+        when "0", "\e", "\x03"  # 0, ESC, or Ctrl-C
+          # Cancel - do nothing
         end
       end
 

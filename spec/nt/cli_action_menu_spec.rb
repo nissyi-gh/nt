@@ -30,12 +30,12 @@ RSpec.describe NT::CLI do
   describe '#show_task_actions_menu' do
     it 'displays the action menu' do
       expect(cli).to receive(:puts).with(/Task: Test Task 1/)
-      expect(cli).to receive(:puts).with(/1\. Complete\/Uncomplete/)
-      expect(cli).to receive(:puts).with(/2\. Edit title/)
-      expect(cli).to receive(:puts).with(/3\. Set due date/)
-      expect(cli).to receive(:puts).with(/4\. Add child task/)
-      expect(cli).to receive(:puts).with(/5\. Delete task/)
-      expect(cli).to receive(:puts).with(/0\. Cancel/)
+      expect(cli).to receive(:puts).with(/\[C\] Complete\/Uncomplete/)
+      expect(cli).to receive(:puts).with(/\[E\] Edit title/)
+      expect(cli).to receive(:puts).with(/\[D\] Set due date/)
+      expect(cli).to receive(:puts).with(/\[A\] Add child task/)
+      expect(cli).to receive(:puts).with(/\[X\] Delete task/)
+      expect(cli).to receive(:puts).with(/\[ESC\] Cancel/)
       expect(cli).to receive(:print).with("Choose action: ")
 
       allow(STDIN).to receive(:raw).and_yield(STDIN)
@@ -113,9 +113,70 @@ RSpec.describe NT::CLI do
         cli.send(:show_task_actions_menu)
       end
 
+      it 'completes task when pressing c' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("c")
+
+        expect(task_manager).to receive(:complete).with(@task1.id)
+
+        cli.send(:show_task_actions_menu)
+      end
+
+      it 'edits title when pressing e' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("e")
+        allow(cli).to receive(:gets).and_return("New Title\n")
+
+        expect(task_manager).to receive(:edit_title).with(@task1.id, "New Title")
+
+        cli.send(:show_task_actions_menu)
+      end
+
+      it 'sets due date when pressing d' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("d")
+        allow(cli).to receive(:gets).and_return("tomorrow\n")
+
+        expect(task_manager).to receive(:edit_due_date).with(@task1.id, Date.today + 1)
+
+        cli.send(:show_task_actions_menu)
+      end
+
+      it 'adds child task when pressing a' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("a")
+        allow(cli).to receive(:gets).and_return("New Child Task\n")
+
+        expect(task_manager).to receive(:add).with("New Child Task", parent_id: @task1.id)
+
+        cli.send(:show_task_actions_menu)
+      end
+
+      it 'deletes task when pressing x and confirming' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("x", "y")
+
+        expect(task_manager).to receive(:delete).with(@task1.id)
+
+        cli.send(:show_task_actions_menu)
+      end
+
       it 'cancels menu when selecting 0' do
         allow(STDIN).to receive(:raw).and_yield(STDIN)
         allow(STDIN).to receive(:getch).and_return("0")
+
+        expect(task_manager).not_to receive(:complete)
+        expect(task_manager).not_to receive(:edit_title)
+        expect(task_manager).not_to receive(:edit_due_date)
+        expect(task_manager).not_to receive(:add)
+        expect(task_manager).not_to receive(:delete)
+
+        cli.send(:show_task_actions_menu)
+      end
+
+      it 'cancels menu when pressing ESC' do
+        allow(STDIN).to receive(:raw).and_yield(STDIN)
+        allow(STDIN).to receive(:getch).and_return("\e")
 
         expect(task_manager).not_to receive(:complete)
         expect(task_manager).not_to receive(:edit_title)
