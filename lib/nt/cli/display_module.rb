@@ -164,7 +164,7 @@ module NT
             status_line += " | Typing ID: #{@id_buffer}" if @id_buffer.length > 0
             puts colorize(status_line, :green, :underline)
           end
-          puts "↑/↓: Navigate | Enter: Actions | i: Details | a: Add | m: Export | /: Cmd | q: Quit"
+          puts "↑/↓/j/k: Navigate | Enter: Actions | i: Details | a: Add | m: Export | /: Cmd | q: Quit"
         end
       end
     end
