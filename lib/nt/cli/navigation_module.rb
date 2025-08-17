@@ -44,6 +44,9 @@ module NT
         when "/"
           clear_id_buffer
           @mode = :command
+        when "m", "M"
+          clear_id_buffer
+          export_to_markdown
         when "q", "Q"
           clear_id_buffer
           @running = false

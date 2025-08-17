@@ -332,7 +332,7 @@ RSpec.describe NT::CLI do
       it 'shows navigation instructions' do
         cli.instance_variable_set(:@all_tasks, cli.send(:collect_all_tasks, task_manager.root_tasks))
 
-        expect(cli).to receive(:puts).with(/Navigate.*Jump to ID.*Add.*Command mode.*Quit/)
+        expect(cli).to receive(:puts).with(/Navigate.*Jump to ID.*Add.*Markdown.*Command.*Quit/)
         cli.send(:show_navigation_prompt)
       end
     end

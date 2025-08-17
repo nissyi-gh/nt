@@ -4,6 +4,7 @@ require_relative 'cli/date_parser'
 require_relative 'cli/display_module'
 require_relative 'cli/navigation_module'
 require_relative 'cli/command_module'
+require_relative 'cli/markdown_formatter'
 
 module NT
   class CLI
@@ -11,6 +12,7 @@ module NT
     include CLI::DisplayModule
     include CLI::NavigationModule
     include CLI::CommandModule
+    include CLI::MarkdownFormatter
 
     def initialize(task_manager: nil)
       @task_manager = task_manager || TaskManager.new
