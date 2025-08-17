@@ -112,7 +112,8 @@ RSpec.describe NT::CLI do
     it 'displays the command prompt' do
       expect(cli).to receive(:puts).with("-" * 50)
       expect(cli).to receive(:puts).with("Commands: add <title> | add-child <parent_id> <title> | complete <id>")
-      expect(cli).to receive(:puts).with("          edit <id> <title> | delete <id> | exit")
+      expect(cli).to receive(:puts).with("          edit <id> <title> | due <id> <date> | delete <id> | exit")
+      expect(cli).to receive(:puts).with("          (date: YYYY-MM-DD, YYYYMMDD, MMDD, 'today', 'tomorrow', 'none')")
       expect(cli).to receive(:print).with("> ")
 
       cli.send(:show_prompt)

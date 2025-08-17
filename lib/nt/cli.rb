@@ -1,4 +1,5 @@
 require 'date'
+require 'io/console'
 
 module NT
   class CLI
@@ -24,33 +25,66 @@ module NT
       system("clear")
     end
 
+    def terminal_size
+      IO.console&.winsize || [24, 80]  # Default to 24 rows, 80 columns
+    end
+
     def display_tasks
-      puts "=" * 50
-      puts " NT Task Manager"
-      puts "=" * 50
+      height, width = terminal_size
+      
+      # Header
+      puts "=" * [width, 50].min
+      puts " NT Task Manager".center([width, 50].min)
+      puts "=" * [width, 50].min
       puts
 
+      # Task list
       root_tasks = @task_manager.root_tasks
-
+      
+      # Calculate available space for tasks (leave room for header, stats, and prompt)
+      # Header: 4 lines, Stats: 3 lines, Prompt: 5 lines, Buffer: 2 lines
+      reserved_lines = 14
+      available_lines = [height - reserved_lines, 5].max
+      
       if root_tasks.empty?
         puts "No tasks yet. Use 'add <title>' to create a task."
       else
+        # Collect all task lines
+        task_lines = []
         root_tasks.each do |task|
-          puts task.to_s
+          task_lines.concat(task.to_s.split("\n"))
+        end
+        
+        # Display tasks within available space
+        if task_lines.length <= available_lines
+          task_lines.each { |line| puts line }
+        else
+          # Show truncated list with scroll indicator
+          displayed_lines = available_lines - 1
+          task_lines.first(displayed_lines).each { |line| puts line }
+          puts "... (#{task_lines.length - displayed_lines} more lines, scroll to see all)"
         end
       end
-
-      puts
+      
+      # Fill remaining space to push stats to bottom
+      current_line_count = 4  # Header lines
+      current_line_count += root_tasks.empty? ? 1 : [task_lines.length, available_lines].min
+      
+      lines_to_fill = height - current_line_count - 8  # 8 for stats and prompt
+      lines_to_fill.times { puts } if lines_to_fill > 0
+      
+      # Statistics at bottom
       stats = @task_manager.statistics
       if stats[:total] > 0
-        puts "-" * 50
+        puts "-" * [width, 50].min
         puts "Total: #{stats[:total]} | Completed: #{stats[:completed]} | " \
              "Overdue: #{stats[:overdue]} | Due Today: #{stats[:due_today]}"
       end
     end
 
     def show_prompt
-      puts "-" * 50
+      width = terminal_size[1]
+      puts "-" * [width, 50].min
       puts "Commands: add <title> | add-child <parent_id> <title> | complete <id>"
       puts "          edit <id> <title> | due <id> <date> | delete <id> | exit"
       puts "          (date: YYYY-MM-DD, YYYYMMDD, MMDD, 'today', 'tomorrow', 'none')"
@@ -63,7 +97,6 @@ module NT
       return unless input
 
       parts = input.split(" ", 3)
-      puts parts
       command = parts[0]&.downcase
 
       case command
