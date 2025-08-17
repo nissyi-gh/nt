@@ -12,11 +12,35 @@ module NT
         reset: "\e[0m"
       }.freeze
 
-      def colorize(text, color)
+      # ANSI style codes
+      STYLES = {
+        underline: "\e[4m",
+        bold: "\e[1m",
+        reset: "\e[0m"
+      }.freeze
+
+      def colorize(text, color, style = nil)
         return text unless STDIN.tty? && color_supported?
 
-        color_code = COLORS[color] || COLORS[:reset]
-        "#{color_code}#{text}#{COLORS[:reset]}"
+        result = text
+
+        # Apply style if specified
+        if style && STYLES[style]
+          result = "#{STYLES[style]}#{result}"
+        end
+
+        # Apply color
+        if color && COLORS[color]
+          result = "#{COLORS[color]}#{result}"
+        end
+
+        # Reset at the end
+        "#{result}#{COLORS[:reset]}"
+      end
+
+      def underline(text)
+        return text unless STDIN.tty? && color_supported?
+        "#{STYLES[:underline]}#{text}#{STYLES[:reset]}"
       end
 
       private

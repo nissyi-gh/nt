@@ -119,9 +119,9 @@ module NT
           end
 
           # Apply color based on priority
-          # Selected task takes precedence (green)
+          # Selected task takes precedence (green with underline)
           if i == @selected_index && @mode == :navigation
-            task_line = colorize(task_line, :green)
+            task_line = colorize(task_line, :green, :underline)
           # Otherwise, color based on due date status
           elsif !task.completed? && task.due_date
             if task.overdue?
@@ -162,7 +162,7 @@ module NT
           if selected_task
             status_line = "Selected: #{selected_task.title} (ID: #{selected_task.id})"
             status_line += " | Typing ID: #{@id_buffer}" if @id_buffer.length > 0
-            puts status_line
+            puts colorize(status_line, :green, :underline)
           end
           puts "↑/↓: Navigate | Enter: Actions | i: Details | a: Add | m: Export | /: Cmd | q: Quit"
         end
