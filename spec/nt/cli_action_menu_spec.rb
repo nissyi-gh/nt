@@ -33,6 +33,8 @@ RSpec.describe NT::CLI do
       expect(cli).to receive(:puts).with(/\[C\] Complete\/Uncomplete/)
       expect(cli).to receive(:puts).with(/\[E\] Edit title/)
       expect(cli).to receive(:puts).with(/\[D\] Set due date/)
+      expect(cli).to receive(:puts).with(/\[U\] Edit URL/)
+      expect(cli).to receive(:puts).with(/\[V\] View\/Open URL/)
       expect(cli).to receive(:puts).with(/\[A\] Add child task/)
       expect(cli).to receive(:puts).with(/\[X\] Delete task/)
       expect(cli).to receive(:puts).with(/\[ESC\] Cancel/)

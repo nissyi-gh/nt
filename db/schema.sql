@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     completed BOOLEAN DEFAULT 0,
     parent_id INTEGER,
     due_date DATE,
+    reference_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (parent_id) REFERENCES tasks(id) ON DELETE CASCADE

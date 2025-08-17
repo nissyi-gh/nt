@@ -99,6 +99,11 @@ module NT
           # Task display
           checkbox = task.completed? ? "[✓]" : "[ ]"
           task_line = "#{indicator}#{indent}#{checkbox} #{task.id}: #{task.title}"
+          
+          # Add URL indicator
+          if task.reference_url && !task.reference_url.empty?
+            task_line += " 🔗"
+          end
 
           # Add due date info if present
           if task.due_date
@@ -159,7 +164,7 @@ module NT
             status_line += " | Typing ID: #{@id_buffer}" if @id_buffer.length > 0
             puts status_line
           end
-          puts "↑/↓: Navigate | 0-9+Enter: Jump to ID | a: Add | m: Markdown | /: Command | q: Quit"
+          puts "↑/↓: Navigate | Enter: Actions | i: Details | a: Add | m: Export | /: Cmd | q: Quit"
         end
       end
     end
