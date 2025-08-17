@@ -1,3 +1,4 @@
+require_relative "nt/task"
 require_relative "nt/cli"
 
 module NT

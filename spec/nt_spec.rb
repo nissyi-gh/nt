@@ -8,7 +8,7 @@ RSpec.describe NT do
     end
 
     it 'creates a new CLI instance' do
-      expect(NT::CLI).not_to receive(:new).and_return(cli_instance)
+      expect(NT::CLI).to receive(:new).and_return(cli_instance)
 
       described_class.run
     end
