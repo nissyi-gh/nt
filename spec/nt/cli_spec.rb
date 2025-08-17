@@ -21,14 +21,33 @@ RSpec.describe NT::CLI do
     before do
       allow(cli).to receive(:clear_screen)
       allow(cli).to receive(:display_tasks)
+      allow(cli).to receive(:show_navigation_prompt)
+      allow(cli).to receive(:handle_navigation_input) do
+        cli.instance_variable_set(:@running, false)
+      end
       allow(cli).to receive(:show_prompt)
+      allow(cli).to receive(:handle_input)
+      allow(cli).to receive(:puts)
+      # Set default mode to navigation
+      cli.instance_variable_set(:@mode, :navigation)
+    end
+
+    it 'runs the main loop until @running is false in navigation mode' do
+      expect(cli).to receive(:clear_screen).once
+      expect(cli).to receive(:display_tasks).once
+      expect(cli).to receive(:show_navigation_prompt).once
+      expect(cli).to receive(:handle_navigation_input).once
+      expect(cli).to receive(:puts).with("\nBye!")
+
+      cli.run
+    end
+    
+    it 'runs the main loop until @running is false in command mode' do
+      cli.instance_variable_set(:@mode, :command)
       allow(cli).to receive(:handle_input) do
         cli.instance_variable_set(:@running, false)
       end
-      allow(cli).to receive(:puts)
-    end
-
-    it 'runs the main loop until @running is false' do
+      
       expect(cli).to receive(:clear_screen).once
       expect(cli).to receive(:display_tasks).once
       expect(cli).to receive(:show_prompt).once
@@ -129,8 +148,18 @@ RSpec.describe NT::CLI do
   end
 
   describe '#display_tasks (private)' do
-    it 'is a TODO method' do
+    before do
+      allow(cli).to receive(:puts)
+      allow(cli).to receive(:terminal_size).and_return([24, 80])
+    end
+    
+    it 'displays tasks without error' do
       expect { cli.send(:display_tasks) }.not_to raise_error
+    end
+    
+    it 'shows message when no tasks' do
+      expect(cli).to receive(:puts).with(/No tasks yet/)
+      cli.send(:display_tasks)
     end
   end
 end
