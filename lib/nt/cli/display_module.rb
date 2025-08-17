@@ -113,6 +113,19 @@ module NT
             end
           end
 
+          # Apply color based on priority
+          # Selected task takes precedence (green)
+          if i == @selected_index && @mode == :navigation
+            task_line = colorize(task_line, :green)
+          # Otherwise, color based on due date status
+          elsif !task.completed? && task.due_date
+            if task.overdue?
+              task_line = colorize(task_line, :red)
+            elsif task.due_soon?
+              task_line = colorize(task_line, :yellow)
+            end
+          end
+          
           puts task_line
         end
 

@@ -5,6 +5,7 @@ require_relative 'cli/display_module'
 require_relative 'cli/navigation_module'
 require_relative 'cli/command_module'
 require_relative 'cli/markdown_formatter'
+require_relative 'cli/color_module'
 
 module NT
   class CLI
@@ -13,6 +14,7 @@ module NT
     include CLI::NavigationModule
     include CLI::CommandModule
     include CLI::MarkdownFormatter
+    include CLI::ColorModule
 
     def initialize(task_manager: nil)
       @task_manager = task_manager || TaskManager.new
